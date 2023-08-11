@@ -24,11 +24,46 @@ const getOneProduct = asyncHandler( async(req, res) => {
 
 //Filtering, sorting & pagination
 const getAllProducts = asyncHandler( async(req, res) => {
-    const products = await Product.find()
-    return res.status(200).json({
-        success: products ? true :  false,
-        productsData: products ? products : 'Cannot get all products'
-    })
+    const queries = {...req.query}
+    // Extract special fields from query
+    const excludeFields = ['limit', 'sort', 'page', 'fields']
+    excludeFields.forEach(element => delete queries[element])   
+
+    // Format operators to mongoose corrected syntax
+    let queryString = JSON.stringify(queries)
+    queryString = queryString.replace(/\b(gte|gt|lt|lte)\b/g, matchedElement => `$${matchedElement}`) //add $ sign
+    const formatedQueries = JSON.parse(queryString)
+
+    // Filtering 
+    if (queries?.title) formatedQueries.title = {$regex: queries.title, $options: 'i'} // Case insensitive
+    let queryCommand = Product.find(formatedQueries)
+
+    // Sorting
+    if (req.query.sort) {
+        // 'quantity,title' => [quantity,title] => 'quantity title'
+        const sortBy = req.query.sort.split(',').join(' ')
+        queryCommand = queryCommand.sort(sortBy)
+    }
+
+    // Fields limiting
+    // Pagination
+
+    // Execute query (in mogoose >7.0 use then and catch instead of .exec() )
+    // Amount of products satisfy the condition !== Amount of products return after calling API
+    queryCommand
+        .then(async (response) => {
+            const counts = await Product.find(formatedQueries).countDocuments()
+            return res.status(200).json({
+                success: response ? true :  false,
+                productsData: response ? response : 'Cannot get all products',
+                counts
+            })
+        }).catch((err) => {
+                if (err) throw new Error(err.message)
+            }) 
+
+    // const products = await Product.find()
+    
 })
 
 const updateOneProduct = asyncHandler( async(req, res) => {
