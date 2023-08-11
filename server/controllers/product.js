@@ -2,6 +2,7 @@ const Product = require('..\\models\\product')
 const asyncHandler = require('express-async-handler')
 const slugify = require('slugify')
 
+
 const createProduct = asyncHandler( async(req, res) => {
     if (Object.keys(req.body).length === 0) throw new Error('Missing inputs')
     if (req.body && req.body.title) req.body.slug = slugify(req.body.title)
@@ -21,6 +22,7 @@ const getOneProduct = asyncHandler( async(req, res) => {
         productData: product ? product : 'Cannot get the product'
     })
 })
+
 
 //Filtering, sorting & pagination
 const getAllProducts = asyncHandler( async(req, res) => {
@@ -46,7 +48,19 @@ const getAllProducts = asyncHandler( async(req, res) => {
     }
 
     // Fields limiting
-    // Pagination
+    if (req.query.fields) {
+        // 'quantity,title' => [quantity,title] => 'quantity title'
+        const fields = req.query.fields.split(',').join(' ')
+        queryCommand = queryCommand.select(fields)
+    }
+
+    // Pagination: 
+    //limit Specifies the maximum number of documents the query will return.
+    //skip: Specifies the number of documents to skip.
+    const page = +req.query.page || 1       //+req is converts to number
+    const limit =  req.query.limit || process.env.LIMIT_PRODUCT
+    const skip = (page-1)*limit
+    queryCommand.skip(skip).limit(limit)
 
     // Execute query (in mogoose >7.0 use then and catch instead of .exec() )
     // Amount of products satisfy the condition !== Amount of products return after calling API
@@ -55,8 +69,8 @@ const getAllProducts = asyncHandler( async(req, res) => {
             const counts = await Product.find(formatedQueries).countDocuments()
             return res.status(200).json({
                 success: response ? true :  false,
+                counts,
                 productsData: response ? response : 'Cannot get all products',
-                counts
             })
         }).catch((err) => {
                 if (err) throw new Error(err.message)
@@ -65,6 +79,7 @@ const getAllProducts = asyncHandler( async(req, res) => {
     // const products = await Product.find()
     
 })
+
 
 const updateOneProduct = asyncHandler( async(req, res) => {
     const {productId} = req.params
@@ -75,6 +90,7 @@ const updateOneProduct = asyncHandler( async(req, res) => {
         updatedProductData: updatedProduct ? updatedProduct : 'Cannot update the product'
     })
 })
+
 
 const deleteOneProduct = asyncHandler( async(req, res) => {
     const {productId} = req.params
@@ -87,10 +103,38 @@ const deleteOneProduct = asyncHandler( async(req, res) => {
 })
 
 
+const ratings = asyncHandler( async(req, res) => {
+    const {_id} = req.user
+    const {star, comment, productId} = req.body
+    if (!star || !productId) throw new Error('Missing inputs')
+    const ratingProduct = await Product.findById(productId)
+    const alreadyRating = ratingProduct?.ratings?.find(element => element.postedBy.toString() === _id)
+
+    if (alreadyRating) {
+        // change star and comment is added (In case: User is commented and stared)
+        await Product.updateOne({
+            ratings: { $elemMatch: alreadyRating }
+        }, {
+            $set: { "ratings.$.star": star, "ratings.$.comment": comment }
+        })
+    } else {
+        // add new star and comment
+        Product.findByIdAndUpdate(productId, {
+            $push: {ratings: {star, comment, postedBy: _id}}
+        }, {new : true})
+    }
+
+    return res.status(200).json({
+        success: true,
+    })
+})
+
+
 module.exports = {
     createProduct,
     getOneProduct,
     getAllProducts,
     updateOneProduct,
     deleteOneProduct,
+    ratings,
 }
