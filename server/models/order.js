@@ -13,6 +13,7 @@ var orderSchema = new mongoose.Schema({
         enum: ['Cancelled','Processing','Successed']
     },
     paymentIntent:{
+        //coming soon
     },
     orderBy:{
         type:mongoose.Types.ObjectId,

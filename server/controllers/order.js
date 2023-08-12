@@ -10,3 +10,8 @@ const createOrder = asyncHandler(async(req, res) => {
         createdBlog: response ? response : 'Cannot create new blog'
     })
 })
+
+
+module.exports = {
+    createOrder,
+}
