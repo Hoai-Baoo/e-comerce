@@ -124,10 +124,21 @@ const ratings = asyncHandler( async(req, res) => {
         }, {new : true})
     }
 
+    // totalRating
+    const updatedProduct = await Product.findById(productId)
+    const ratingsCount = updatedProduct.ratings.length
+    const sumRatingsPoint = updatedProduct.ratings.reduce((sum, element) => sum + +element.star, 0)
+    updatedProduct.totalRatings = Math.round(sumRatingsPoint * 10/ratingsCount) / 10
+
+    await updatedProduct.save()
+
     return res.status(200).json({
         success: true,
+        updatedProduct,
     })
 })
+
+
 
 
 module.exports = {
