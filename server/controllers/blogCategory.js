@@ -23,7 +23,7 @@ const updateBlogCategory = asyncHandler(async(req, res) => {
     const response = await BlogCategory.findByIdAndUpdate(blogCategoryId, req.body, {new: true})
     return res.json({
         success: response ? true : false,
-        updatedBlogCategories: response ? response : 'Cannot update the blog category'
+        updatedBlogCategory: response ? response : 'Cannot update the blog category'
     })
 })
 
@@ -32,7 +32,7 @@ const deleteBlogCategory = asyncHandler(async(req, res) => {
     const response = await BlogCategory.findByIdAndDelete(blogCategoryId)
     return res.json({
         success: response ? true : false,
-        deletedBlogCategories: response ? response : 'Cannot delete the blog category'
+        deletedBlogCategory: response ? response : 'Cannot delete the blog category'
     })
 })
 

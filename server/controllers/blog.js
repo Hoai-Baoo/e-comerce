@@ -40,10 +40,11 @@ const deleteBlog = asyncHandler(async(req, res) => {
         deletedBlog: response ? response : 'Cannot delete the blog '
     })
 })
-//eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2NGQ0ZmMwYmNlZjJlMWZhMjRlMzEyNTAiLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE2OTE4MjA2OTUsImV4cCI6MTY5MTk5MzQ5NX0.L9uYC-Qin0gtI0wwAQk9D4ofe0AaUimYWn1kmT0S26Q
+
+
 const likeBlog = asyncHandler(async(req, res) => {
     const { _id} = req.user
-    const {blogId} = req.body
+    const {blogId} = req.params
     if (!blogId) throw new Error('Missing inputs')
     const blog = await Blog.findById(blogId)
 
@@ -68,9 +69,52 @@ const likeBlog = asyncHandler(async(req, res) => {
             success: response ? true : false,
             result: response
         })
-    }
-     
+    } 
 })
+
+
+const dislikeBlog = asyncHandler(async(req, res) => {
+    const { _id} = req.user
+    const {blogId} = req.params
+    if (!blogId) throw new Error('Missing inputs')
+    const blog = await Blog.findById(blogId)
+
+    const isLiked = blog?.likes?.find(element => element.toString() === _id)
+    if (isLiked) {
+        const response = await Blog.findByIdAndUpdate(blogId, {$pull: {likes: _id}}, {new: true})
+        return res.json({
+            success: response ? true : false,
+            result: response
+        })
+    }
+    const isDisliked = blog?.dislikes?.find(element => element.toString() === _id)
+    if (isDisliked) {
+        const response = await Blog.findByIdAndUpdate(blogId, {$pull: {dislikes: _id}}, {new: true})
+        return res.json({
+            success: response ? true : false,
+            result: response
+        })
+    } else {
+        const response = await Blog.findByIdAndUpdate(blogId, {$push: {dislikes: _id}}, {new: true})
+        return res.json({
+            success: response ? true : false,
+            result: response
+        })
+    } 
+})
+
+
+const getOneBlog = asyncHandler(async(req, res)=> {
+    const {blogId} = req.params
+    const blog = await Blog.findByIdAndUpdate(blogId, {$inc:{numberViewers: 1}}, {new: true})
+        .populate('likes','firstname lastname')
+        .populate('dislikes','firstname lastname')
+    return res.json({
+        success: blog ? true : false,
+        result: blog
+    })
+})
+
 
 module.exports = {
     createBlog,
@@ -78,4 +122,6 @@ module.exports = {
     updateBlog,
     deleteBlog,
     likeBlog,
+    dislikeBlog,
+    getOneBlog,
 }
