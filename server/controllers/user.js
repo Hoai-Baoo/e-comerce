@@ -186,6 +186,18 @@ const updateUserAdmin = asyncHandler(async(req, res) => {
 })
 
 
+const updateUserAddress = asyncHandler(async(req, res) => {
+    const { _id} = req.user
+    console.log(req.body)
+    if (!req.body.address) throw new Error('Missing inputs')
+    const response = await User.findByIdAndUpdate(_id, {$push: {address: req.body.address}}, {new : true})
+    return res.status(200).json({
+        success: response ? true : false,
+        updatedUser: response ? response : 'Something went wrong!'
+    })
+})
+
+
 module.exports = {
     register,
     login,
@@ -198,4 +210,5 @@ module.exports = {
     deleteUser,
     updateUserPersonal,
     updateUserAdmin,
+    updateUserAddress,
 }

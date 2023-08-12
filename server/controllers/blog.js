@@ -116,6 +116,19 @@ const getOneBlog = asyncHandler(async(req, res)=> {
 })
 
 
+const uploadImageBlog = asyncHandler(async(req, res) => {
+    const {blogId} = req.params
+    console.log(blogId)
+    if (!req.file) throw new Error('Missing images')
+    const response = await Blog.findByIdAndUpdate(blogId, {image: req.file.path}, {new: true})
+    console.log(response)
+    return res.status(200).json({
+        success: response ? true : false,
+        updatedBlog: response ? response : 'Cannot upload image blog'
+    })
+})
+
+
 module.exports = {
     createBlog,
     getAllBlogs,
@@ -124,4 +137,5 @@ module.exports = {
     likeBlog,
     dislikeBlog,
     getOneBlog,
+    uploadImageBlog,
 }

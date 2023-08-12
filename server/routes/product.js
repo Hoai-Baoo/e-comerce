@@ -9,7 +9,7 @@ router.put('/ratings', verifyAcessToken, ctrls.ratings)
 
 
 
-router.put('/upload-image/:productId', [verifyAcessToken, isAdmin], uploader.single('images'), ctrls.uploadImagesProduct)
+router.put('/upload-image/:productId', [verifyAcessToken, isAdmin], uploader.array('images',10), ctrls.uploadImagesProduct)
 router.put('/:productId', [verifyAcessToken, isAdmin], ctrls.updateOneProduct)
 router.delete('/:productId', [verifyAcessToken, isAdmin], ctrls.deleteOneProduct)
 router.get('/:productId', ctrls.getOneProduct)
