@@ -188,7 +188,6 @@ const updateUserAdmin = asyncHandler(async(req, res) => {
 
 const updateUserAddress = asyncHandler(async(req, res) => {
     const { _id} = req.user
-    console.log(req.body)
     if (!req.body.address) throw new Error('Missing inputs')
     const response = await User.findByIdAndUpdate(_id, {$push: {address: req.body.address}}, {new : true})
     return res.status(200).json({
@@ -197,6 +196,36 @@ const updateUserAddress = asyncHandler(async(req, res) => {
     })
 })
 
+
+const updateUserCart = asyncHandler(async(req, res) => {
+    const { _id} = req.user
+    const {productId, quantity, color} = req.body
+    
+    if (!productId || !quantity || !color) throw new Error('Missing inputs')
+    const user = await User.findById(_id).select('cart')
+    const havingInCart = user?.cart?.find(element => element.product.toString() === productId)
+    if (havingInCart) {
+        if (havingInCart.color === color) {
+            const response = await User.updateOne({cart: {$elemMatch: havingInCart}}, {$set: {'cart.$.quantity': quantity}}, {new: true})
+            return res.status(200).json({
+                success: response ? true : false,
+                updatedUser: response ? response : 'Something went wrong!'
+            })
+        } else {
+            const response = await User.findByIdAndUpdate(_id, {$push: {cart: {product: productId, quantity, color}}}, {new: true})
+            return res.status(200).json({
+                success: response ? true : false,
+                updatedUser: response ? response : 'Something went wrong!'
+            })
+        }
+    } else {
+        const response = await User.findByIdAndUpdate(_id, {$push: {cart: {product: productId, quantity, color}}}, {new: true})
+        return res.status(200).json({
+            success: response ? true : false,
+            updatedUser: response ? response : 'Something went wrong!'
+        })
+    } 
+})
 
 module.exports = {
     register,
@@ -211,4 +240,5 @@ module.exports = {
     updateUserPersonal,
     updateUserAdmin,
     updateUserAddress,
+    updateUserCart,
 }
