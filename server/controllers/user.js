@@ -204,8 +204,10 @@ const updateUserCart = asyncHandler(async(req, res) => {
     if (!productId || !quantity || !color) throw new Error('Missing inputs')
     const user = await User.findById(_id).select('cart')
     const havingInCart = user?.cart?.find(element => element.product.toString() === productId)
+    console.log(havingInCart)
     if (havingInCart) {
         if (havingInCart.color === color) {
+            console.log('samecolor')
             const response = await User.updateOne({cart: {$elemMatch: havingInCart}}, {$set: {'cart.$.quantity': quantity}}, {new: true})
             return res.status(200).json({
                 success: response ? true : false,
